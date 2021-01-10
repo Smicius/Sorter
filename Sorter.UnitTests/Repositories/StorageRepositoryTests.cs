@@ -1,5 +1,6 @@
 ﻿using Moq;
 using NUnit.Framework;
+using Sorter.Exceptions;
 using Sorter.Helpers;
 using Sorter.Repositories;
 using Sorter.UnitTests.TestHelpers;
@@ -44,6 +45,10 @@ namespace Sorter.UnitTests.Repositories
       var stream = StreamHelper.Create(string.Join(" ", expectedNumbers));
 
       fileHelper
+        .Setup(service => service.Exists(It.IsAny<string>()))
+        .Returns(true);
+
+      fileHelper
         .Setup(service => service.OpenRead(It.IsAny<string>()))
         .Returns(stream);
 
@@ -55,8 +60,25 @@ namespace Sorter.UnitTests.Repositories
       // Assert
       Assert.True(Enumerable.SequenceEqual(expectedNumbers, actualNumbers));
 
+      fileHelper.Verify(service => service.Exists(filePath), Times.Once);
       fileHelper.Verify(service => service.OpenRead(filePath), Times.Once);
       fileHelper.VerifyNoOtherCalls();
+    }
+
+    [Test, AutoDataCustomization]
+    public void Load_FileDoesNotExist_ThrowsBadRequestException(Mock<IFileHelper> fileHelper, string filePath)
+    {
+      // Arrange
+      fileHelper
+        .Setup(service => service.Exists(It.IsAny<string>()))
+        .Returns(false);
+
+      var storageRepositorySut = new StorageRepository(fileHelper.Object);
+
+      // Act & Assert
+      var exception = Assert.Throws<BadRequestException>(() => storageRepositorySut.Load(filePath));
+
+      Assert.AreEqual("Latest number sequence was not found.", exception.Message);
     }
 
     [Test, AutoDataCustomization]
@@ -64,6 +86,10 @@ namespace Sorter.UnitTests.Repositories
     {
       // Arrange
       var stream = StreamHelper.Create("5 7 NaN 155");
+
+      fileHelper
+        .Setup(service => service.Exists(It.IsAny<string>()))
+        .Returns(true);
 
       fileHelper
         .Setup(service => service.OpenRead(It.IsAny<string>()))

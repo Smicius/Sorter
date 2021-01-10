@@ -1,4 +1,5 @@
-﻿using Sorter.Helpers;
+﻿using Sorter.Exceptions;
+using Sorter.Helpers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -42,6 +43,9 @@ namespace Sorter.Repositories
     public int[] Load(string filePath)
     {
       var numberSequence = new List<int>();
+
+      if (!FileHelper.Exists(filePath))
+        throw new BadRequestException("Latest number sequence was not found.");
 
       using (var stream = FileHelper.OpenRead(filePath))
       using (var reader = new StreamReader(stream))
