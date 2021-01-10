@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Sorter.Filters;
 using Sorter.Helpers;
+using Sorter.Middlewares;
 using Sorter.Repositories;
 using Sorter.Services;
 
@@ -24,6 +25,8 @@ namespace Sorter
     {
       if (env.IsDevelopment())
         app.UseDeveloperExceptionPage();
+
+      app.UseMiddleware<ExceptionMiddleware>();
 
       app.UseRouting();
       app.UseEndpoints(endpoints => endpoints.MapDefaultControllerRoute());
